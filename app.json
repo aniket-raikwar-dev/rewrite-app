@@ -1,29 +1,30 @@
 {
   "expo": {
-    "name": "rewrite.",
+    "name": "Rewrite AI",
     "slug": "rewrite-ai-expo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/rewrite-app-icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#F4F4F4",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/rewrite-icon-foreground.png",
+        "monochromeImage": "./assets/rewrite-icon-foreground.png"
       },
       "package": "com.aniket6234.rewriteai"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/rewrite-app-icon.png"
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ],
     "scheme": "rewrite-ai",
     "extra": {

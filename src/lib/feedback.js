@@ -17,3 +17,7 @@ export const selectionFeedback = () => trigger(() => Platform.OS === 'android'
 export const successFeedback = () => trigger(() => Platform.OS === 'android'
   ? Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Confirm)
   : Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
+
+export const typingFeedback = () => trigger(() => Platform.OS === 'android'
+  ? Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Segment_Frequent_Tick)
+  : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft));

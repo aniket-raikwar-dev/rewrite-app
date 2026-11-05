@@ -1,4 +1,5 @@
 import React from 'react';
+import { Image } from 'react-native';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
 import { shapeOptions } from '../lib/rewrite';
 
@@ -23,6 +24,10 @@ export function RewriteMark({ size = 40, ink = '#242424', markInk = '#ffffff' })
     <Path d="M12 15h14m-4-4 4 4-4 4M28 25H14m4 4-4-4 4-4" fill="none" stroke={markInk} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
     <Path d="m29 8 .7 2.3L32 11l-2.3.7L29 14l-.7-2.3L26 11l2.3-.7L29 8Z" fill={markInk} />
   </Svg>;
+}
+
+export function RewriteRLogo({ size = 68 }) {
+  return <Image source={require('../../assets/rewrite-logo.png')} resizeMode="contain" accessibilityRole="image" accessibilityLabel="Rewrite logo" style={{ width: size, height: size }} />;
 }
 
 const spikyPath = Array.from({ length: 48 }, (_, index) => {

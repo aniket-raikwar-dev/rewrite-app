@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Linking from 'expo-linking';
 import { shapeOptions } from '../lib/rewrite';
+import { createSessionFromUrl, signInWithGoogle as startGoogleSignIn } from '../lib/auth';
+import { supabase } from '../lib/supabase';
 
 const AppContext = createContext(null);
 const keys = {
-  history: 'rewrite-history', theme: 'rewrite-theme', shape: 'rewrite-profile-shape', session: 'rewrite-demo-session',
+  history: 'rewrite-history', theme: 'rewrite-theme', shape: 'rewrite-profile-shape',
 };
 
 function parseHistory(raw) {
@@ -19,19 +22,44 @@ export function AppProvider({ children }) {
   const [history, setHistory] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
   const [profileShape, setProfileShape] = useState('fork');
-  const [demoSignedIn, setDemoSignedIn] = useState(false);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
     let active = true;
-    AsyncStorage.multiGet(Object.values(keys)).then(entries => {
+    Promise.all([
+      AsyncStorage.multiGet(Object.values(keys)),
+      supabase.auth.getSession(),
+      Linking.getInitialURL(),
+    ]).then(async ([entries, authResult, initialUrl]) => {
       if (!active) return;
       const saved = Object.fromEntries(entries);
       setHistory(parseHistory(saved[keys.history]));
       setDarkMode(saved[keys.theme] === 'dark');
       setProfileShape(shapeOptions.some(([kind]) => kind === saved[keys.shape]) ? saved[keys.shape] : 'fork');
-      setDemoSignedIn(saved[keys.session] === 'true');
-    }).catch(() => {}).finally(() => { if (active) setReady(true); });
-    return () => { active = false; };
+
+      let nextSession = authResult.data.session;
+      if (initialUrl?.startsWith('rewrite-ai://auth/callback')) {
+        nextSession = await createSessionFromUrl(initialUrl);
+      }
+      if (active) setSession(nextSession);
+    }).catch(error => {
+      console.warn('Could not restore the app session.', error);
+    }).finally(() => { if (active) setReady(true); });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (active) setSession(nextSession);
+    });
+    const linkingSubscription = Linking.addEventListener('url', ({ url }) => {
+      if (url.startsWith('rewrite-ai://auth/callback')) {
+        createSessionFromUrl(url).catch(error => console.warn('Could not finish Google sign-in.', error));
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+      linkingSubscription.remove();
+    };
   }, []);
 
   const toggleTheme = () => {
@@ -43,21 +71,18 @@ export function AppProvider({ children }) {
     setProfileShape(kind);
     AsyncStorage.setItem(keys.shape, kind).catch(() => {});
   };
-  const signInDemo = async () => {
-    setDemoSignedIn(true);
-    await AsyncStorage.setItem(keys.session, 'true').catch(() => {});
+  const signInWithGoogle = () => startGoogleSignIn();
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   };
-  const signOutDemo = async () => {
-    setDemoSignedIn(false);
-    await AsyncStorage.removeItem(keys.session).catch(() => {});
-  };
-  const saveRewrite = (input, output) => {
-    const next = [{ id: Date.now(), input: input.trim(), output, date: new Date().toISOString() }, ...history.filter(item => item.input !== input.trim())].slice(0, 20);
+  const saveRewrite = (input, output, outputs) => {
+    const next = [{ id: Date.now(), input: input.trim(), output, outputs, date: new Date().toISOString() }, ...history.filter(item => item.input !== input.trim())].slice(0, 20);
     setHistory(next);
     AsyncStorage.setItem(keys.history, JSON.stringify(next)).catch(() => {});
   };
 
-  return <AppContext.Provider value={{ ready, history, darkMode, profileShape, demoSignedIn, toggleTheme, chooseShape, signInDemo, signOutDemo, saveRewrite }}>{children}</AppContext.Provider>;
+  return <AppContext.Provider value={{ ready, history, darkMode, profileShape, session, user: session?.user ?? null, isSignedIn: Boolean(session), toggleTheme, chooseShape, signInWithGoogle, signOut, saveRewrite }}>{children}</AppContext.Provider>;
 }
 
 export function useApp() {

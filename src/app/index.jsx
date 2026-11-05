@@ -1,10 +1,10 @@
 import React from 'react';
 import { Redirect } from 'expo-router';
-import { View } from 'react-native';
+import Splash from '../components/Splash';
 import { useApp } from '../state/AppContext';
 
 export default function Index() {
-  const { ready, demoSignedIn } = useApp();
-  if (!ready) return <View />;
-  return <Redirect href={demoSignedIn ? '/workspace' : '/login'} />;
+  const { ready, isSignedIn } = useApp();
+  if (!ready) return <Splash />;
+  return <Redirect href={isSignedIn ? '/workspace' : '/login'} />;
 }

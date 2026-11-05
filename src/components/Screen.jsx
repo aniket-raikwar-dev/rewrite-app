@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, interpolateColor, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { Avatar, Icon, RewriteMark } from './Artwork';
+import { Avatar, Icon, RewriteRLogo } from './Artwork';
 import { useApp } from '../state/AppContext';
 import { selectionFeedback, tapFeedback } from '../lib/feedback';
 
@@ -25,19 +25,27 @@ export function useColors() {
 
 export function Kicker({ children, style }) {
   const c = useColors();
-  return <Text style={[{ color: c.sub, fontFamily: font.semibold, fontSize: 10, letterSpacing: 1.2, marginBottom: 7 }, style]}>{children}</Text>;
+  return <Text style={[{ color: c.sub, fontFamily: font.medium, fontSize: 12, letterSpacing: 1.2, marginBottom: 7 }, style]}>{children}</Text>;
 }
 
 export function Header({ showProfile = false, profileActive = false }) {
-  const { darkMode, toggleTheme, profileShape, signOutDemo } = useApp();
+  const { darkMode, toggleTheme, profileShape, signOut } = useApp();
   const c = useColors();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 90, right: 18 });
+  const avatarRef = useRef(null);
+  const { width: windowWidth } = useWindowDimensions();
+  const openMenu = () => {
+    tapFeedback();
+    if (menuOpen) { setMenuOpen(false); return; }
+    avatarRef.current?.measureInWindow((x, y, w, h) => { setMenuPos({ top: y + h + 8, right: Math.max(12, windowWidth - (x + w)) }); setMenuOpen(true); });
+  };
   const iconRotation = useSharedValue(0);
   const iconMotion = useAnimatedStyle(() => ({ transform: [{ rotate: `${iconRotation.value}deg` }] }));
-  const signOut = async () => { tapFeedback(); setMenuOpen(false); await signOutDemo(); router.replace('/login'); };
+  const onSignOut = async () => { tapFeedback(); setMenuOpen(false); await signOut(); router.replace('/login'); };
   return <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 50 }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
-      <RewriteMark size={32} ink={c.ink} markInk={c.markInk} />
+      <RewriteRLogo size={31} />
       <Text style={{ color: c.ink, fontFamily: font.bold, fontSize: 18, letterSpacing: -1 }}>rewrite<Text style={{ color: '#9a69c9' }}>.</Text></Text>
     </View>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -45,18 +53,22 @@ export function Header({ showProfile = false, profileActive = false }) {
         <Animated.View style={iconMotion}><Icon name={darkMode ? 'sun' : 'moon'} size={18} color={c.ink} /></Animated.View>
       </Pressable>
       {showProfile && <View style={{ position: 'relative', zIndex: 60 }}>
-        <Pressable onPress={() => { tapFeedback(); setMenuOpen(open => !open); }} accessibilityRole="button" accessibilityLabel="Account menu" accessibilityState={{ expanded: menuOpen }} style={{ width: 36, height: 36, padding: 3, borderWidth: menuOpen || profileActive ? 2 : 1, borderColor: menuOpen || profileActive ? '#c9b1e1' : c.line, borderRadius: 18, backgroundColor: c.card, alignItems: 'center', justifyContent: 'center' }}><Avatar variant={profileShape} size={28} /></Pressable>
-        {menuOpen && <Animated.View entering={FadeIn.duration(180).reduceMotion(ReduceMotion.System)} style={{ position: 'absolute', top: 44, right: 0, width: 166, padding: 5, borderWidth: 1, borderColor: c.line, borderRadius: 12, backgroundColor: c.card, elevation: 8, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, zIndex: 70 }}>
-          <Pressable onPress={() => { selectionFeedback(); setMenuOpen(false); if (!profileActive) router.push('/profile'); }} accessibilityRole="menuitem" style={{ minHeight: 40, paddingHorizontal: 11, borderRadius: 8, backgroundColor: profileActive ? c.inset : c.card, flexDirection: 'row', alignItems: 'center', gap: 10 }}><Icon name="user" size={16} color={c.ink} /><Text style={{ color: c.ink, fontFamily: profileActive ? font.semibold : font.medium, fontSize: 12 }}>Profile</Text></Pressable>
+        <Pressable ref={avatarRef} collapsable={false} onPress={openMenu} accessibilityRole="button" accessibilityLabel="Account menu" accessibilityState={{ expanded: menuOpen }} style={{ width: 36, height: 36, padding: 3, borderWidth: menuOpen || profileActive ? 2 : 1, borderColor: menuOpen || profileActive ? '#c9b1e1' : c.line, borderRadius: 18, backgroundColor: c.card, alignItems: 'center', justifyContent: 'center' }}><Avatar variant={profileShape} size={28} /></Pressable>
+        <Modal visible={menuOpen} transparent animationType="none" statusBarTranslucent onRequestClose={() => setMenuOpen(false)}>
+          <Pressable onPress={() => setMenuOpen(false)} accessibilityRole="button" accessibilityLabel="Close account menu" style={{ flex: 1 }}>
+          <Animated.View entering={FadeIn.duration(160).reduceMotion(ReduceMotion.System)} style={{ position: 'absolute', top: menuPos.top, right: menuPos.right, width: 200, padding: 6, borderWidth: 1, borderColor: c.line, borderRadius: 16, backgroundColor: c.card, elevation: 8, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, zIndex: 70 }}>
+          <Pressable onPress={() => { selectionFeedback(); setMenuOpen(false); if (!profileActive) router.push('/profile'); }} accessibilityRole="menuitem" style={{ minHeight: 50, paddingHorizontal: 14, borderRadius: 11, backgroundColor: profileActive ? c.inset : c.card, flexDirection: 'row', alignItems: 'center', gap: 12 }}><Icon name="user" size={20} color={c.ink} /><Text style={{ color: c.ink, fontFamily: font.medium, fontSize: 16 }}>Profile</Text></Pressable>
           <View style={{ height: 1, backgroundColor: c.line, marginVertical: 4, marginHorizontal: 5 }} />
-          <Pressable onPress={signOut} accessibilityRole="menuitem" style={{ minHeight: 40, paddingHorizontal: 11, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }}><Icon name="signout" size={16} color={c.ink} /><Text style={{ color: c.ink, fontFamily: font.medium, fontSize: 12 }}>Sign out</Text></Pressable>
-        </Animated.View>}
+          <Pressable onPress={onSignOut} accessibilityRole="menuitem" style={{ minHeight: 50, paddingHorizontal: 14, borderRadius: 11, flexDirection: 'row', alignItems: 'center', gap: 12 }}><Icon name="signout" size={20} color={c.ink} /><Text style={{ color: c.ink, fontFamily: font.medium, fontSize: 16 }}>Sign out</Text></Pressable>
+        </Animated.View>
+          </Pressable>
+        </Modal>
       </View>}
     </View>
   </View>;
 }
 
-export function Screen({ children, showProfile = false, profileActive = false, showHeader = true, scrollRef }) {
+export function Screen({ children, showProfile = false, profileActive = false, showHeader = true, scrollRef, fixedHeader = false, scrollable = true, bottomContent = null, contentBottomPadding = 0 }) {
   const c = useColors();
   const { darkMode } = useApp();
   const { width, height } = useWindowDimensions();
@@ -64,10 +76,33 @@ export function Screen({ children, showProfile = false, profileActive = false, s
   const themeProgress = useSharedValue(darkMode ? 1 : 0);
   useEffect(() => { themeProgress.value = withTiming(darkMode ? 1 : 0, { duration: 300 }); }, [darkMode, themeProgress]);
   const stageMotion = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(themeProgress.value, [0, 1], ['#f4f4f4', '#1b1d1c']) }));
+  if (fixedHeader) return <SafeAreaView style={{ flex: 1, backgroundColor: wide ? c.canvas : c.stage }}>
+    <StatusBar style={darkMode ? 'light' : 'dark'} backgroundColor={c.stage} />
+    <View style={{ flex: 1, alignItems: 'center', padding: wide ? 30 : 0 }}>
+      <KeyboardAvoidingView enabled={Platform.OS !== 'web'} behavior="padding" keyboardVerticalOffset={0} style={{ flex: 1, width: '100%', alignItems: 'center' }}>
+        <Animated.View style={[{ flex: 1, width: '100%', maxWidth: 1180, paddingTop: wide ? 26 : 12, borderRadius: wide ? 38 : 0, overflow: 'hidden' }, stageMotion]}>
+          {showHeader && <View style={{ paddingHorizontal: wide ? 50 : 18, paddingBottom: wide ? 18 : 9, zIndex: 50 }}><Header showProfile={showProfile} profileActive={profileActive} /></View>}
+          <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} contentContainerStyle={{ flexGrow: 1, paddingHorizontal: wide ? 50 : 18, paddingBottom: contentBottomPadding }}>
+            <Animated.View entering={FadeIn.duration(220).reduceMotion(ReduceMotion.System)} style={{ flex: 1 }}>{children}</Animated.View>
+          </ScrollView>
+          {bottomContent && <View style={{ paddingTop: 9, paddingHorizontal: wide ? 50 : 10, paddingBottom: wide ? 16 : 8, backgroundColor: c.stage, zIndex: 40 }}>{bottomContent}</View>}
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </View>
+  </SafeAreaView>;
+  if (!scrollable) return <SafeAreaView style={{ flex: 1, backgroundColor: wide ? c.canvas : c.stage }}>
+    <StatusBar style={darkMode ? 'light' : 'dark'} backgroundColor={c.stage} />
+    <View style={{ flex: 1, alignItems: 'center', padding: wide ? 30 : 0 }}>
+      <Animated.View style={[{ flex: 1, width: '100%', maxWidth: 1180, paddingTop: wide ? 40 : 20, paddingHorizontal: wide ? 50 : 18, paddingBottom: wide ? 42 : 20, borderRadius: wide ? 38 : 0 }, stageMotion]}>
+        {showHeader && <Header showProfile={showProfile} profileActive={profileActive} />}
+        <Animated.View entering={FadeIn.duration(220).reduceMotion(ReduceMotion.System)} style={{ flex: 1 }}>{children}</Animated.View>
+      </Animated.View>
+    </View>
+  </SafeAreaView>;
   return <SafeAreaView style={{ flex: 1, backgroundColor: wide ? c.canvas : c.stage }}>
     <StatusBar style={darkMode ? 'light' : 'dark'} backgroundColor={c.stage} />
     <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, alignItems: 'center', padding: wide ? 30 : 0 }}>
-      <Animated.View style={[{ width: '100%', maxWidth: 1180, minHeight: wide ? Math.max(620, height - 60) : height, paddingTop: wide ? 36 : 28, paddingHorizontal: wide ? 50 : 18, paddingBottom: wide ? 62 : 36, borderRadius: wide ? 38 : 0 }, stageMotion]}>
+      <Animated.View style={[{ width: '100%', maxWidth: 1180, minHeight: wide ? Math.max(620, height - 60) : height, paddingTop: wide ? 40 : 32, paddingHorizontal: wide ? 50 : 18, paddingBottom: wide ? 62 : 36, borderRadius: wide ? 38 : 0 }, stageMotion]}>
         {showHeader && <Header showProfile={showProfile} profileActive={profileActive} />}
         <Animated.View entering={FadeIn.duration(220).reduceMotion(ReduceMotion.System)} style={{ flex: 1 }}>{children}</Animated.View>
       </Animated.View>
