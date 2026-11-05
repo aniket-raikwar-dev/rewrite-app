@@ -22,9 +22,9 @@ export default function ProfileScreen() {
         <Text style={{ color: c.ink, fontFamily: font.medium, fontSize: 14 }}>Workspace</Text>
       </Pressable>
       <View style={{ marginHorizontal: 3, marginBottom: 22 }}>
-        <Kicker>YOUR SPACE</Kicker>
-        <Text style={{ color: c.ink, fontFamily: font.semibold, fontSize: 30, letterSpacing: -1.2 }}>Your profile</Text>
-        <Text style={{ marginTop: 12, color: c.sub, fontFamily: font.regular, fontSize: 16, lineHeight: 24 }}>A simple home for your writing.</Text>
+        <Kicker style={{ marginBottom: 1 }}>YOUR SPACE</Kicker>
+        <Text style={{ color: c.ink, fontFamily: font.semibold, fontSize: 22, letterSpacing: -0.7 }}>Your profile</Text>
+        <Text style={{ marginTop: 6, color: c.sub, fontFamily: font.regular, fontSize: 14, lineHeight: 20 }}>A simple home for your writing.</Text>
       </View>
       <View style={{ borderWidth: 1, borderColor: c.line, borderRadius: 18, backgroundColor: c.card, overflow: 'hidden' }}>
         <View style={{ padding: 25, alignItems: 'flex-start' }}>
