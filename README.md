@@ -21,37 +21,31 @@ Most of us write quick messages that are unclear, too blunt, or full of typos, t
 
 Under the hood, the app sends your text, the language and the chosen styles to a Supabase Edge Function named `rewrite-message` (see [`src/lib/rewriteApi.js`](src/lib/rewriteApi.js)). It returns one output per requested style, which the app renders and saves locally.
 
+## App preview
+
+<p align="center">
+  <img src="docs/store-preview/preview-1.png" width="30%" alt="Sign in with Google" />
+  <img src="docs/store-preview/preview-2.png" width="30%" alt="Pick the tone you need" />
+  <img src="docs/store-preview/preview-3.png" width="30%" alt="Every version, ready to send" />
+</p>
+<p align="center">
+  <img src="docs/store-preview/preview-4.png" width="30%" alt="Recent rewrites, saved" />
+  <img src="docs/store-preview/preview-5.png" width="30%" alt="Reopen and copy anytime" />
+  <img src="docs/store-preview/preview-6.png" width="30%" alt="Light, dark, and yours" />
+</p>
+
 ## Screens and features
 
-### Workspace
-The main screen: a message composer with Paste and Clear actions, a language dropdown, and a version picker. The input border plays a soft gradient sweep in the app's purple and pink palette when idle, inviting you to start typing.
+1. **Sign in.** One tap with Google. The login screen shows the idea at a glance: a rough draft becomes a clean version.
+2. **Pick the tone.** Open the version picker with the **+** button and toggle Better, Professional, Casual and Polite. Choose English or Hindi output from the language dropdown. When the message box is empty, its border plays a soft purple and pink gradient sweep.
+3. **Every version, ready to send.** Your draft appears as a bubble on the right, a short "thinking" line follows, then each version types itself out in order on a timeline, with light haptics while typing. Every version has its own Copy button.
+4. **Recent rewrites.** Saved rewrites appear as cards with a "Latest message" highlight.
+5. **Reopen and copy anytime.** Tap any card to open a sheet with your original message and every version generated for it, each with a Copy button.
+6. **Light, dark, and yours.** Switch between light and dark themes, see your account and saved-rewrite count, and choose one of 11 profile icons.
 
-![Choosing versions](docs/screenshots/choose-versions.png)
-![Language dropdown](docs/screenshots/language-dropdown.png)
+Also included: a fixed header with scrolling content, a keyboard-aware composer on iOS and Android, and a branded loading screen while sign-in completes.
 
-### AI response
-Results appear below your sent message as a vertical timeline, one version after another. Each version types out character by character, with light haptic feedback while typing and a success haptic when it finishes.
-
-![Rewrite results](docs/screenshots/results.png)
-
-### Recent rewrites and details
-Saved rewrites are shown as cards. Tap any card to open a bottom sheet with your original message and every version generated for it, each with a Copy button.
-
-![Recent rewrites](docs/screenshots/recent-rewrites.png)
-![Rewrite details](docs/screenshots/rewrite-details.png)
-
-### Profile
-Shows your Google account, how many rewrites are saved, a shortcut to your history, and a choice of 11 profile icons. The account menu in the header (Profile, Sign out) closes when you tap outside it.
-
-![Profile menu](docs/screenshots/profile-menu.png)
-
-### Also included
-- Light and dark themes (toggle in the header)
-- A fixed header with scrolling content on every screen
-- Keyboard-aware composer that stays above the keyboard on iOS and Android
-- A branded loading screen while sign-in completes
-
-> Screenshots were captured during development; spacing and sizes may differ slightly from the latest build.
+> The preview images are generated from the app's design tokens (colors, type and components) with sample content. To regenerate them, run `python docs/store-preview/build.py`, then render each slide with headless Chrome at 1080 x 1920 (`preview.html?n=1` to `?n=6`).
 
 ## Tech stack
 
